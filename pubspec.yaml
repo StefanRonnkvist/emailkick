@@ -1,0 +1,40 @@
+name: emailkick
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.4.36+43
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  android_intent_plus: ^6.0.0
+  cupertino_icons: ^1.0.8
+  file_picker: ^12.0.0-beta.7
+  flutter:
+    sdk: flutter
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  http: ^1.6.0
+  package_info_plus: ^10.2.0
+  path_provider: ^2.1.5
+  share_plus: ^13.2.0
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  msix: ^3.16.13
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/play_store_512.png
+
+msix_config:
+  display_name: eMail Kick
+  publisher_display_name: eMail Kick
+  identity_name: com.stefanronnkvist.paid.emailkick
+  logo_path: web/icons/icon-512.png
+  install_certificate: false
+  msix_version: 0.4.36.43
