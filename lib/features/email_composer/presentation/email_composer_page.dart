@@ -46,8 +46,9 @@ class HelpAnalysisCard extends StatelessWidget {
         title: 'Build the message',
         icon: Icons.route_outlined,
         items: <String>[
-          'Sender stores your identity. Recipients supports To, Cc, and Bcc lists. Customer and Coworker add service contacts and machine details.',
-          'In Content, choose service modes to build the subject. Work and purchase orders build the preheader; both fields remain editable.',
+          'Sender stores your identity: From Name, From Email, Reply-To, and Phone. Recipients holds Company, Department, and the To, Cc, and Bcc lists.',
+          'Customer stores customer contact details, a shipping address, and one or more machine records. Coworker adds a name, email, phone, and role.',
+          'In Content, choose service modes to build the subject. Work Order and Purchase Order build the preheader; both fields remain editable.',
           'Enter the plain-text body, select any document references, then use Open Draft in Mail App.',
         ],
       ),
@@ -55,7 +56,8 @@ class HelpAnalysisCard extends StatelessWidget {
         title: 'Reuse and transfer data',
         icon: Icons.save_outlined,
         items: <String>[
-          'Save sender, recipient, and customer profiles to reuse them. Common field values, customer machines, and the current draft are also remembered locally.',
+          'Save Sender Details, Save Recipients, and Save Customer to reuse them. Recipients can be edited or deleted from the saved-values table.',
+          'Common field values, customer machines, and the current draft are also remembered locally and restored when you return.',
           'Actions imports JSON or CSV, exports saved data as JSON or CSV, and creates CSV templates for preparing bulk data.',
           'Exports normally go to Downloads and fall back to app documents when needed. Actions shows the current path and can open or copy it.',
         ],
@@ -64,7 +66,8 @@ class HelpAnalysisCard extends StatelessWidget {
         title: 'Review and send',
         icon: Icons.attach_file_outlined,
         items: <String>[
-          'EmailKick opens a prepared draft in your default mail app; it never sends the email automatically.',
+          'Open Draft in Mail App checks required fields, including at least one To recipient, then launches a mailto draft in your default mail app.',
+          'EmailKick opens a prepared draft; it never sends the email automatically.',
           'Selected documents appear as file references in the message. Attach the actual files in your mail app before sending.',
           'Review recipients, subject, body, and attachments in the mail app before you send.',
         ],
@@ -75,7 +78,7 @@ class HelpAnalysisCard extends StatelessWidget {
         items: <String>[
           'Actions > Delete DB Tables immediately clears the draft, profiles, remembered values, and customer machine records. Export a backup first if you need the data.',
           'Web builds keep data only for the current browser session; persistent database features are available in installed app builds.',
-          'Information contains platform-specific import and export tips, the contact form, and support submissions for this app.',
+          'Information contains import and export tips, an Open Contact Form button, and the support submissions received for this app.',
         ],
       ),
     ];

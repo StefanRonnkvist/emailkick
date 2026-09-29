@@ -1,10 +1,10 @@
 EmailKick helps service and support teams prepare clear customer email drafts without rebuilding the same job context for every request.
 
-Move through a guided composer for sender details, To/Cc/Bcc recipients, customers, coworkers, machines, work and purchase orders, parts, and message content. Choose service modes to create an editable subject, while order numbers create an editable inbox preheader.
+Move through a guided composer for sender details, To/Cc/Bcc recipients, customers, coworkers, machines, work and purchase orders, parts, and message content. Choose service modes to create an editable subject, while order numbers create an editable inbox preheader. When you are ready, EmailKick opens the prepared draft in your default mail app.
 
 REUSE THE DETAILS THAT MATTER
 
-Save sender, recipient, and customer profiles for later. Customer profiles can include machine records, and EmailKick remembers common field values and restores the current draft from local storage.
+Save sender profiles for your name, email, reply-to, and phone number. Save recipient profiles with company and department. Save customer profiles with their contact details, shipping address, and machine records, including machine names, numbers, model names, and serial numbers. EmailKick remembers common field values and restores your current draft from local storage.
 
 MOVE DATA IN AND OUT
 
@@ -20,7 +20,9 @@ KEY FEATURES
 
 • Guided service-email workflow
 • Reusable sender, recipient, customer, and machine records
-• To, Cc, and Bcc recipient support
+• Customer machine records with model and serial details
+• Coworker contact details for the message context
+• To, Cc, and Bcc recipient support with email validation
 • Editable generated subjects and preheaders
 • Local draft restoration and remembered field values
 • JSON and CSV import and export

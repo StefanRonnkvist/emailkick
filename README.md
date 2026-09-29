@@ -4,14 +4,18 @@ EmailKick is a Flutter app for service and support teams that prepare repeatable
 
 ## Features
 
-- Guided sections for sender, recipients, customer, coworker, content, data actions, information, and help.
-- Reusable sender, recipient, and customer profiles with customer machine records.
-- Local draft restoration and remembered values for frequently used fields.
-- To, Cc, and Bcc recipient lists with validation before the draft is opened.
-- Service content modes that build an editable subject and order fields that build an editable preheader.
-- JSON and CSV import, JSON and CSV backup export, and reusable CSV templates.
+- Guided sections: **Sender, Recipients, Customer, Coworker, Content, Actions, Information, Help**.
+- Reusable sender profiles (From Name, From Email, Reply-To, Phone) with save, reset, and remembered history.
+- Reusable recipient profiles (Company, Department, To, Cc, Bcc) that can be edited or deleted from a saved-values table.
+- Customer profiles with shipping address and repeatable customer machine records (customer machine name/number, manufacturer machine name, model name, model number, serial number).
+- Coworker contact block (name, email, phone, role) added to the draft context.
+- To, Cc, and Bcc comma-separated recipient lists with email validation before the draft is opened.
+- Content modes (Expedite Request, Technician on Site, Machine Down, Part Lookup, Quote Part, Ship Immediately) that build an editable subject, and Work Order / Purchase Order fields that build an editable preheader.
+- Editable plain-text body, document selection, and **Open Draft in Mail App** to launch a `mailto:` draft.
+- Local draft restoration and remembered values for frequently used fields, persisted through Hive.
+- JSON and CSV import, JSON and CSV backup export, reusable CSV templates, plus a current export path you can copy or open.
 - Responsive phone, tablet, and desktop navigation.
-- Built-in import and export guidance, contact form, and app-specific support-submission view.
+- Built-in import/export guidance, contact form, and app-specific support-submission view.
 
 ## Typical workflow
 
@@ -22,7 +26,7 @@ EmailKick is a Flutter app for service and support teams that prepare repeatable
 5. Select any supporting documents and open the prepared draft.
 6. Review the email and attach the actual files in the mail app before sending.
 
-EmailKick prepares a draft but never sends email automatically. Selected documents are written into the message as file references because the receiving mail app controls attachments.
+EmailKick prepares a draft but never sends email automatically. Selected documents are written into the message as file references because the receiving mail app controls attachments. On first use, when the local database is empty, EmailKick opens the **Help** section.
 
 ## Data and platforms
 
@@ -65,14 +69,16 @@ flutter test
 
 ## Release builds
 
-This workspace includes VS Code tasks for common release builds:
+This workspace includes VS Code tasks in `.vscode/tasks.json` for common release builds:
 
-- Build APK (release)
-- Build AppBundle (release)
-- Build Web (release)
-- Build Windows (release)
-- Build MSIX (release)
-- Build All Release Targets
+- Build Release APK
+- Build Release App Bundle
+- Build Release Web
+- Build Release Windows
+- Build Release MSIX (runs Build Release Windows first)
+- Build All Release Targets (default build task: precleans Android release locks, bumps the version, then builds every target above)
+- Google Store (updates packages, bumps the version, then runs Build All Release Targets)
+- Flutter: Version Bump (runs `scripts/bump-version.ps1`)
 
 Equivalent Flutter commands are:
 
@@ -87,8 +93,8 @@ dart run msix:create --build-windows=false
 ## Project structure
 
 - `lib/main.dart`: app bootstrap and initialization.
-- `lib/app/`: app shell and shared UI setup.
-- `lib/core/storage/app_db.dart`: Hive-backed local storage wrapper.
+- `lib/app/`: app shell, theme, splash screen, and web database notice.
+- `lib/core/storage/app_db.dart`: Hive-backed local storage wrapper (re-exported by `lib/data/app_db.dart`).
 - `lib/features/email_composer/presentation/`: the full email composer workflow and UI.
 - `lib/data/contact/`: support contact and submission views.
 - `store_listing/short_description.txt`: short Google Play description.

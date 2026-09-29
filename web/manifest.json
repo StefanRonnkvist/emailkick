@@ -3,16 +3,16 @@
     "short_name": "eMail Kick",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1E6F5C",
+    "theme_color": "#1E6F5C",
+    "description": "Build service email drafts faster with reusable profiles and job details.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
       "icons": [
         { "src": "/favicon.ico", "type": "image/x-icon", "sizes": "16x16 32x32" },
-        { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
-        { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" },
-        { "src": "/icon-192-maskable.png", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
-        { "src": "/icon-512-maskable.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+        { "src": "/icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+        { "src": "/icons/icon-512.png", "type": "image/png", "sizes": "512x512" },
+        { "src": "/icons/icon-192-maskable.png", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
+        { "src": "/icons/icon-512-maskable.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
       ]
 }
