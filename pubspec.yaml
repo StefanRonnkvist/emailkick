@@ -1,7 +1,7 @@
 name: emailkick
 description: "Guided service email composer with reusable profiles, customer machine records, and JSON/CSV import and export."
 publish_to: 'none'
-version: 0.4.38+45
+version: 0.4.39+46
 
 environment:
   sdk: ^3.12.0
@@ -37,4 +37,4 @@ msix_config:
   identity_name: com.stefanronnkvist.paid.emailkick
   logo_path: web/icons/icon-512.png
   install_certificate: false
-  msix_version: 0.4.38.45
+  msix_version: 0.4.39.46
