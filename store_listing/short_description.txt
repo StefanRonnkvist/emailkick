@@ -1,1 +1,1 @@
-Build service email drafts faster with reusable profiles and job details.
+Create service email drafts with saved contacts, coworker CC and job details.

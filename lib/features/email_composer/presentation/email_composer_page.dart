@@ -39,15 +39,16 @@ class HelpAnalysisCard extends StatelessWidget {
         icon: Icons.flag_outlined,
         items: <String>[
           'On first use, EmailKick opens Help. Begin in Sender and move through the sections in order; your current draft is restored when you return.',
-          'Required fields are checked when you open the draft. Optional customer, coworker, machine, order, and part details add context to the message.',
+          'Required fields are checked when you open a draft. The current draft and its field values are saved as you edit them on installed app builds.',
         ],
       ),
       _HelpSection(
         title: 'Build the message',
         icon: Icons.route_outlined,
         items: <String>[
-          'Sender stores your identity: From Name, From Email, Reply-To, and Phone. Recipients holds Company, Department, and the To, Cc, and Bcc lists.',
-          'Recipients and customer contact information are together in the Contacts section. Coworkers lets you add multiple contact rows, edit or delete each one, and includes their details in the draft email.',
+          'Sender stores From Name, From Email, Reply-To, and Phone. Open Contacts for Company and Department, customer phone and shipping address, machines, saved customer records, and recipient contacts.',
+          'In Contacts, enter each recipient’s Name, Position, Phone, and Email, then assign the row to To, CC, or BCC. Edit or delete contacts from the table. Customer Name and Email are part of saved customer records; select a saved customer in Content to add the email to To.',
+          'Coworker lets you add multiple contacts with name, email, phone, and role. Use the Content tab to select coworkers for CC; selected coworker emails are added to the recipient roster.',
           'In Content, choose service modes to build the subject. Work Order and Purchase Order build the preheader; both fields remain editable.',
           'Enter the plain-text body, select any document references, then use Open Draft in Mail App.',
         ],
@@ -56,8 +57,8 @@ class HelpAnalysisCard extends StatelessWidget {
         title: 'Reuse and transfer data',
         icon: Icons.save_outlined,
         items: <String>[
-          'Save Sender Details, Save Recipients, and Save Customer to reuse them. Recipients can be edited or deleted from the saved-values table.',
-          'Common field values, customer machines, and the current draft are also remembered locally and restored when you return.',
+          'Use Save Sender Details, Save Recipients, and Save Customer to reuse profiles. Saved recipient profiles can be edited or deleted from their table; recipient contact rows can also be individually edited or deleted.',
+          'On installed app builds, the current draft, contact rows, coworker and machine entries, selections, and typed field values save as you edit and restore when you return. Saved profiles and common dropdown values are also stored locally.',
           'Actions imports JSON or CSV, exports saved data as JSON or CSV, and creates CSV templates for preparing bulk data.',
           'Exports normally go to Downloads and fall back to app documents when needed. Actions shows the current path and can open or copy it.',
         ],
@@ -66,9 +67,9 @@ class HelpAnalysisCard extends StatelessWidget {
         title: 'Review and send',
         icon: Icons.attach_file_outlined,
         items: <String>[
-          'Open Draft in Mail App checks required fields, including at least one To recipient, then launches a mailto draft in your default mail app.',
+          'Open Draft in Mail App checks required fields, including at least one To recipient and valid email addresses, then opens a mailto draft in your default mail app.',
           'EmailKick opens a prepared draft; it never sends the email automatically.',
-          'Selected documents appear as file references in the message. Attach the actual files in your mail app before sending.',
+          'Selected documents appear as file references in the message, not as attached files. Attach the actual files in your mail app before sending.',
           'Review recipients, subject, body, and attachments in the mail app before you send.',
         ],
       ),
@@ -77,7 +78,7 @@ class HelpAnalysisCard extends StatelessWidget {
         icon: Icons.info_outline,
         items: <String>[
           'Actions > Delete DB Tables immediately clears the draft, profiles, remembered values, and customer machine records. Export a backup first if you need the data.',
-          'Web builds keep data only for the current browser session; persistent database features are available in installed app builds.',
+          'Web/PWA builds show a database notice: database functions are unavailable, and entered data is temporary for the current browser session only. Use an installed app build for persistent local data.',
           'Information contains import and export tips, an Open Contact Form button, and the support submissions received for this app.',
         ],
       ),

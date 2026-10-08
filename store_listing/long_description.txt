@@ -1,10 +1,10 @@
 EmailKick helps service and support teams prepare clear customer email drafts without rebuilding the same job context for every request.
 
-Move through a guided composer for sender details, To/Cc/Bcc recipients, customers, coworkers, machines, work and purchase orders, parts, and message content. Choose service modes to create an editable subject, while order numbers create an editable inbox preheader. When you are ready, EmailKick opens the prepared draft in your default mail app.
+Move through a guided composer with Sender, Contacts, Coworker, Content, Actions, Information, and Help sections. Contacts combines company and department details, a recipient roster, and customer phone, shipping address, and machine records. Add each recipient's name, position, phone, and email, then assign them to To, CC, or BCC. Add multiple coworkers and choose which ones to CC from Content. Choose service modes to create an editable subject, while order numbers create an editable inbox preheader. When you are ready, EmailKick opens the prepared draft in your default mail app.
 
 REUSE THE DETAILS THAT MATTER
 
-Save sender profiles for your name, email, reply-to, and phone number. Save recipient profiles with company and department. Save customer profiles with their contact details, shipping address, and machine records, including machine names, numbers, model names, and serial numbers. EmailKick remembers common field values and restores your current draft from local storage.
+Save sender profiles for your name, email, reply-to, and phone number. Save recipient profiles with company, department, and individual contact rows. Assign each individual to one recipient field—To, CC, or BCC—and edit or delete rows as needed. Save customer records with phone, shipping address, and machine records, including machine names, numbers, model names, and serial numbers. Add multiple coworker records with name, email, phone, and role. EmailKick automatically saves and restores the current draft and its contacts, selections, and field values on installed app builds.
 
 MOVE DATA IN AND OUT
 
@@ -19,12 +19,14 @@ Selected documents are added to the draft as file references. Attach the actual 
 KEY FEATURES
 
 • Guided service-email workflow
-• Reusable sender, recipient, customer, and machine records
-• Customer machine records with model and serial details
-• Coworker contact details for the message context
-• To, Cc, and Bcc recipient support with email validation
+• Reusable sender and recipient profiles, customer records, and machine records
+• Recipient contact rows with name, position, phone, and email; assign each row to To, CC, or BCC
+• Multiple editable coworkers, selectable for CC from the Content section
+• Customer phone, shipping address, and associated machine records
+• To, CC, and BCC email validation before opening a draft
 • Editable generated subjects and preheaders
-• Local draft restoration and remembered field values
+• Automatic local draft saving and restoration on installed app builds
+• Web/PWA data is temporary for the current browser session; database persistence is unavailable
 • JSON and CSV import and export
 • Reusable CSV templates
 • Responsive layouts for phone, tablet, and desktop screens

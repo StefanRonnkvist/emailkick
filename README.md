@@ -4,14 +4,14 @@ EmailKick is a Flutter app for service and support teams that prepare repeatable
 
 ## Features
 
-- Guided sections: **Sender, Recipients, Customer, Coworker, Content, Actions, Information, Help**.
+- Guided sections: **Sender, Contacts, Coworker, Content, Actions, Information, Help**. Contacts combines recipient company/department information with customer contact and machine records.
 - Reusable sender profiles (From Name, From Email, Reply-To, Phone) with save, reset, and remembered history.
-- Reusable recipient profiles (Company, Department, To, Cc, Bcc) that can be edited or deleted from a saved-values table.
-- Customer profiles with shipping address and repeatable customer machine records (customer machine name/number, manufacturer machine name, model name, model number, serial number).
-- Coworker contact block (name, email, phone, role) added to the draft context.
-- To, Cc, and Bcc comma-separated recipient lists with email validation before the draft is opened.
+- Individual recipient contacts with Name, Position, Phone, and Email fields. Assign each contact to exactly one of **To**, **CC**, or **BCC**; edit or delete contacts in the table.
+- Reusable recipient profiles that can be edited or deleted from a saved-values table.
+- Customer phone and shipping-address information, saved customer records, and repeatable customer machine records (customer machine name/number, manufacturer machine name, model name, model number, serial number).
+- Multiple coworker records (name, email, phone, role), with edit/delete controls. In Content, add the selected customer's email to To and select multiple coworkers for CC.
 - Content modes (Expedite Request, Technician on Site, Machine Down, Part Lookup, Quote Part, Ship Immediately) that build an editable subject, and Work Order / Purchase Order fields that build an editable preheader.
-- Editable plain-text body, document selection, and **Open Draft in Mail App** to launch a `mailto:` draft.
+- Editable plain-text body, document selection, and **Open Draft in Mail App** to launch a `mailto:` draft. Draft text, contacts and selections are saved as you edit them.
 - Local draft restoration and remembered values for frequently used fields, persisted through Hive.
 - JSON and CSV import, JSON and CSV backup export, reusable CSV templates, plus a current export path you can copy or open.
 - Responsive phone, tablet, and desktop navigation.
@@ -20,8 +20,8 @@ EmailKick is a Flutter app for service and support teams that prepare repeatable
 ## Typical workflow
 
 1. Enter or select a saved sender profile.
-2. Add To, Cc, and Bcc recipients.
-3. Add optional customer, coworker, machine, order, and part context.
+2. In Contacts, add recipient contacts and assign each to To, CC, or BCC. Add customer phone/address and machine details if needed.
+3. Add coworker contacts in Coworker. In Content, select a saved customer for To and choose multiple coworkers for CC.
 4. Choose content modes, review the generated subject and preheader, and write the plain-text body.
 5. Select any supporting documents and open the prepared draft.
 6. Review the email and attach the actual files in the mail app before sending.
@@ -31,7 +31,7 @@ EmailKick prepares a draft but never sends email automatically. Selected documen
 ## Data and platforms
 
 - Installed app builds store drafts, profiles, remembered values, and customer machine records locally on the device.
-- Web builds use temporary in-memory data for the current browser session; persistent database features are unavailable.
+- Web/PWA builds display a notice that database functions are unavailable. Draft and app data are temporary for the current browser session and are not retained after that session ends.
 - Exports use the host Downloads folder when available and fall back to the app documents directory.
 - **Delete DB Tables** immediately clears all persisted composer data and resets the current UI. Export a backup first when the data must be retained.
 - Import accepts EmailKick JSON or CSV data from regular file paths and Android storage providers.
