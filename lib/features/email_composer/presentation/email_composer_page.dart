@@ -47,7 +47,7 @@ class HelpAnalysisCard extends StatelessWidget {
         icon: Icons.route_outlined,
         items: <String>[
           'Sender stores your identity: From Name, From Email, Reply-To, and Phone. Recipients holds Company, Department, and the To, Cc, and Bcc lists.',
-          'Customer stores customer contact details, a shipping address, and one or more machine records. Coworker adds a name, email, phone, and role.',
+          'Customer stores customer contact details, a shipping address, and one or more machine records. Coworkers lets you add multiple contact rows, edit or delete each one, and includes their details in the draft email.',
           'In Content, choose service modes to build the subject. Work Order and Purchase Order build the preheader; both fields remain editable.',
           'Enter the plain-text body, select any document references, then use Open Draft in Mail App.',
         ],
@@ -212,12 +212,7 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
       TextEditingController();
   final TextEditingController _contentMachineSelectorController =
       TextEditingController();
-  final TextEditingController _coworkerNameController = TextEditingController();
-  final TextEditingController _coworkerEmailController =
-      TextEditingController();
-  final TextEditingController _coworkerPhoneController =
-      TextEditingController();
-  final TextEditingController _coworkerRoleController = TextEditingController();
+  final List<_CoworkerEntry> _coworkers = <_CoworkerEntry>[_CoworkerEntry()];
   final FocusNode _fromNameFocusNode = FocusNode();
   final FocusNode _fromEmailFocusNode = FocusNode();
   final FocusNode _replyToFocusNode = FocusNode();
@@ -348,10 +343,9 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _contentCustomerSelectorController.dispose();
     _contentRecipientSelectorController.dispose();
     _contentMachineSelectorController.dispose();
-    _coworkerNameController.dispose();
-    _coworkerEmailController.dispose();
-    _coworkerPhoneController.dispose();
-    _coworkerRoleController.dispose();
+    for (final _CoworkerEntry coworker in _coworkers) {
+      coworker.dispose();
+    }
     _fromNameFocusNode.dispose();
     _fromEmailFocusNode.dispose();
     _replyToFocusNode.dispose();

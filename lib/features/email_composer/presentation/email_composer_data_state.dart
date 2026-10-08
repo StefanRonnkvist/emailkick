@@ -325,8 +325,14 @@ extension _EmailComposerDataState on _EmailComposerPageState {
     for (final _CustomerMachineEntry machine in _customerMachines) {
       machine.dispose();
     }
+    for (final _CoworkerEntry coworker in _coworkers) {
+      coworker.dispose();
+    }
 
     setState(() {
+      _coworkers
+        ..clear()
+        ..add(_CoworkerEntry());
       _customerMachines
         ..clear()
         ..add(_CustomerMachineEntry());
@@ -926,6 +932,22 @@ extension _EmailComposerDataState on _EmailComposerPageState {
     }
   }
 
+  /// Builds one coworker entry from its draft JSON fields.
+  _CoworkerEntry _coworkerFromMap(Map raw) {
+    final _CoworkerEntry coworker = _CoworkerEntry();
+    coworker.name.text = (raw['name'] as String?) ?? '';
+    coworker.email.text = (raw['email'] as String?) ?? '';
+    coworker.phone.text = (raw['phone'] as String?) ?? '';
+    coworker.role.text = (raw['role'] as String?) ?? '';
+    final dynamic isEditingRaw = raw['isEditing'];
+    coworker.isEditing = switch (isEditingRaw) {
+      bool value => value,
+      String value => value.toLowerCase() == 'true',
+      _ => false,
+    };
+    return coworker;
+  }
+
   /// Restores fields, modes, documents, and machines from tolerant JSON data.
   Future<void> _restoreDraftState() async {
     final String? raw = AppDb.instance.getString(_draftStateKey);
@@ -952,6 +974,14 @@ extension _EmailComposerDataState on _EmailComposerPageState {
         (decoded['documents'] as List<dynamic>?) ?? <dynamic>[];
     final List<dynamic> machinesRaw =
         (decoded['machines'] as List<dynamic>?) ?? <dynamic>[];
+    final List<_CoworkerEntry>? restoredCoworkers =
+        decoded.containsKey('coworkers')
+        ? <_CoworkerEntry>[
+            for (final dynamic item
+                in (decoded['coworkers'] as List<dynamic>? ?? <dynamic>[]))
+              if (item is Map) _coworkerFromMap(item),
+          ]
+        : null;
 
     _isRestoringDraft = true;
 
@@ -1049,6 +1079,10 @@ extension _EmailComposerDataState on _EmailComposerPageState {
       for (final _CustomerMachineEntry machine in restoredMachines) {
         machine.dispose();
       }
+      for (final _CoworkerEntry coworker
+          in restoredCoworkers ?? <_CoworkerEntry>[]) {
+        coworker.dispose();
+      }
       return;
     }
 
@@ -1059,6 +1093,14 @@ extension _EmailComposerDataState on _EmailComposerPageState {
       _selectedDocuments
         ..clear()
         ..addAll(restoredDocuments);
+      if (restoredCoworkers != null) {
+        for (final _CoworkerEntry coworker in _coworkers) {
+          coworker.dispose();
+        }
+        _coworkers
+          ..clear()
+          ..addAll(restoredCoworkers);
+      }
       for (final _CustomerMachineEntry machine in _customerMachines) {
         machine.dispose();
       }
@@ -1110,6 +1152,17 @@ extension _EmailComposerDataState on _EmailComposerPageState {
               'name': file.name,
               'path': file.path,
               'size': file.size,
+            },
+          )
+          .toList(),
+      'coworkers': _coworkers
+          .map(
+            (_CoworkerEntry coworker) => <String, dynamic>{
+              'name': coworker.name.text,
+              'email': coworker.email.text,
+              'phone': coworker.phone.text,
+              'role': coworker.role.text,
+              'isEditing': coworker.isEditing,
             },
           )
           .toList(),

@@ -149,6 +149,7 @@ extension _EmailComposerMail on _EmailComposerPageState {
         'Customer Phone: ${_customerPhoneController.text.trim()}',
       if (_customerShippingAddressController.text.trim().isNotEmpty)
         'Shipping Address:\n${_customerShippingAddressController.text.trim()}',
+      ..._buildCoworkerBodyLines(),
       ..._buildMachineBodyLines(),
       '',
       'Message:',
@@ -206,6 +207,35 @@ extension _EmailComposerMail on _EmailComposerPageState {
       _ContentMode.quotePart => 'Quote Part',
       _ContentMode.shipImmediately => 'Ship Immediately',
     };
+  }
+
+  /// Formats populated coworkers as indented body sections.
+  List<String> _buildCoworkerBodyLines() {
+    final List<String> lines = <String>[];
+    int coworkerNumber = 0;
+
+    for (final _CoworkerEntry coworker in _coworkers) {
+      if (!coworker.hasData) {
+        continue;
+      }
+
+      coworkerNumber++;
+      lines.add('Coworker $coworkerNumber:');
+      if (coworker.name.text.trim().isNotEmpty) {
+        lines.add('  Name: ${coworker.name.text.trim()}');
+      }
+      if (coworker.email.text.trim().isNotEmpty) {
+        lines.add('  Email: ${coworker.email.text.trim()}');
+      }
+      if (coworker.phone.text.trim().isNotEmpty) {
+        lines.add('  Phone: ${coworker.phone.text.trim()}');
+      }
+      if (coworker.role.text.trim().isNotEmpty) {
+        lines.add('  Role: ${coworker.role.text.trim()}');
+      }
+    }
+
+    return lines;
   }
 
   /// Formats every non-empty machine as an indented body section.

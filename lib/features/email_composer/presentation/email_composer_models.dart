@@ -357,6 +357,27 @@ class _SavedCustomerMachine {
 }
 
 /// Owns the controllers and expansion state for one editable machine row.
+class _CoworkerEntry {
+  final TextEditingController name = TextEditingController();
+  final TextEditingController email = TextEditingController();
+  final TextEditingController phone = TextEditingController();
+  final TextEditingController role = TextEditingController();
+  bool isEditing = true;
+
+  bool get hasData =>
+      name.text.trim().isNotEmpty ||
+      email.text.trim().isNotEmpty ||
+      phone.text.trim().isNotEmpty ||
+      role.text.trim().isNotEmpty;
+
+  void dispose() {
+    name.dispose();
+    email.dispose();
+    phone.dispose();
+    role.dispose();
+  }
+}
+
 class _CustomerMachineEntry {
   bool isExpanded = true;
   final TextEditingController customerMachineName = TextEditingController();
