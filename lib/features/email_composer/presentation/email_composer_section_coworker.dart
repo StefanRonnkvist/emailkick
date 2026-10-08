@@ -2,6 +2,22 @@
 part of 'email_composer_page.dart';
 
 extension _EmailComposerSectionCoworker on _EmailComposerPageState {
+  void _bindCoworkerDraftListeners() {
+    for (final _CoworkerEntry coworker in _coworkers) {
+      for (final TextEditingController controller in coworker.controllers) {
+        controller.addListener(_handleCoworkerChanged);
+        _coworkerDraftControllers.add(controller);
+      }
+    }
+  }
+
+  void _unbindCoworkerDraftListeners() {
+    for (final TextEditingController controller in _coworkerDraftControllers) {
+      controller.removeListener(_handleCoworkerChanged);
+    }
+    _coworkerDraftControllers.clear();
+  }
+
   Widget _coworkerCard() {
     return _SectionCard(
       title: 'Coworkers',
@@ -109,12 +125,18 @@ extension _EmailComposerSectionCoworker on _EmailComposerPageState {
 
   void _handleCoworkerChanged() {
     setState(() {});
+    _syncSelectedCoworkersToCc();
     _saveDraftState();
   }
 
   void _addCoworker() {
+    final _CoworkerEntry coworker = _CoworkerEntry();
+    for (final TextEditingController controller in coworker.controllers) {
+      controller.addListener(_handleCoworkerChanged);
+      _coworkerDraftControllers.add(controller);
+    }
     setState(() {
-      _coworkers.add(_CoworkerEntry());
+      _coworkers.add(coworker);
     });
     _saveDraftState();
   }
@@ -123,6 +145,7 @@ extension _EmailComposerSectionCoworker on _EmailComposerPageState {
     setState(() {
       _coworkers[index].isEditing = true;
     });
+    _saveDraftState();
   }
 
   void _finishEditingCoworker(int index) {
@@ -134,8 +157,20 @@ extension _EmailComposerSectionCoworker on _EmailComposerPageState {
 
   void _deleteCoworker(int index) {
     final _CoworkerEntry coworker = _coworkers.removeAt(index);
-    coworker.dispose();
-    setState(() {});
+    for (final TextEditingController controller in coworker.controllers) {
+      controller.removeListener(_handleCoworkerChanged);
+      _coworkerDraftControllers.remove(controller);
+    }
+    _selectedCoworkerCcEmails.remove(coworker.email.text.trim().toLowerCase());
+    setState(() {
+      _recipientContacts.removeWhere(
+        (_EmailRecipient contact) =>
+            contact.email.toLowerCase() ==
+            coworker.email.text.trim().toLowerCase(),
+      );
+      coworker.dispose();
+      _syncRecipientContactFields();
+    });
     _saveDraftState();
   }
 }

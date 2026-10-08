@@ -5,37 +5,8 @@ part of 'email_composer_page.dart';
 extension _EmailComposerSectionCustomer on _EmailComposerPageState {
   Widget _customerCard() {
     return _SectionCard(
-      title: 'Customer',
+      title: 'Customer Contact & Machines',
       children: <Widget>[
-        _dropdownTextBox(
-          _customerNameController,
-          focusNode: _customerNameFocusNode,
-          label: 'Customer Name',
-          hint: 'John Smith',
-          options: _customerNameOptions,
-          onValueCommitted: (String value) {
-            _commitSingleValueOption(value, target: _customerNameOptions);
-            _commitCustomerProfile();
-          },
-          onOptionSelected: (String value) {
-            _applyCustomerProfileFromField(_ProfileField.customerName, value);
-          },
-        ),
-        _dropdownTextBox(
-          _customerEmailController,
-          focusNode: _customerEmailFocusNode,
-          label: 'Customer Email',
-          hint: 'john.smith@example.com',
-          validator: _validateOptionalSingleEmail,
-          options: _customerEmailOptions,
-          onValueCommitted: (String value) {
-            _commitSingleValueOption(value, target: _customerEmailOptions);
-            _commitCustomerProfile();
-          },
-          onOptionSelected: (String value) {
-            _applyCustomerProfileFromField(_ProfileField.customerEmail, value);
-          },
-        ),
         _dropdownTextBox(
           _customerPhoneController,
           focusNode: _customerPhoneFocusNode,
@@ -46,10 +17,13 @@ extension _EmailComposerSectionCustomer on _EmailComposerPageState {
           onValueCommitted: (String value) {
             _commitSingleValueOption(value, target: _customerPhoneOptions);
             _commitCustomerProfile();
+            _saveDraftState();
           },
           onOptionSelected: (String value) {
             _applyCustomerProfileFromField(_ProfileField.customerPhone, value);
+            _saveDraftState();
           },
+          onChanged: (_) => _saveDraftState(),
         ),
         _dropdownTextBox(
           _customerShippingAddressController,
@@ -63,13 +37,16 @@ extension _EmailComposerSectionCustomer on _EmailComposerPageState {
           onValueCommitted: (String value) {
             _commitSingleValueOption(value, target: _customerAddressOptions);
             _commitCustomerProfile();
+            _saveDraftState();
           },
           onOptionSelected: (String value) {
             _applyCustomerProfileFromField(
               _ProfileField.customerAddress,
               value,
             );
+            _saveDraftState();
           },
+          onChanged: (_) => _saveDraftState(),
         ),
         const SizedBox(height: 8),
         Text(
@@ -335,7 +312,10 @@ extension _EmailComposerSectionCustomer on _EmailComposerPageState {
       for (final _CustomerMachineEntry machine in _customerMachines) {
         machine.isExpanded = false;
       }
-      _customerMachines.add(_CustomerMachineEntry()..isExpanded = false);
+      final _CustomerMachineEntry machine = _CustomerMachineEntry()
+        ..isExpanded = false;
+      _bindMachineDraftListeners(machine);
+      _customerMachines.add(machine);
     });
     _saveDraftState();
   }
@@ -346,6 +326,7 @@ extension _EmailComposerSectionCustomer on _EmailComposerPageState {
     }
 
     final _CustomerMachineEntry removed = _customerMachines.removeAt(index);
+    _unbindMachineDraftListeners(removed);
     removed.dispose();
     setState(() {});
     _saveDraftState();

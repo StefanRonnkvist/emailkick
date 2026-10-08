@@ -92,7 +92,47 @@ class _SenderProfile {
   }
 }
 
-/// Persistable recipient details, including comma-separated address lists.
+/// An individual recipient and their assigned email destination.
+class _EmailRecipient {
+  const _EmailRecipient({
+    required this.name,
+    required this.position,
+    required this.phone,
+    required this.email,
+    required this.type,
+  });
+
+  final String name;
+  final String position;
+  final String phone;
+  final String email;
+  final String type;
+
+  Map<String, String> toMap() => <String, String>{
+    'name': name,
+    'position': position,
+    'phone': phone,
+    'email': email,
+    'type': type,
+  };
+
+  static _EmailRecipient? fromMap(Map raw) {
+    final String email = (raw['email'] as String? ?? '').trim();
+    if (email.isEmpty) {
+      return null;
+    }
+    final String type = (raw['type'] as String? ?? 'to').toLowerCase();
+    return _EmailRecipient(
+      name: (raw['name'] as String? ?? '').trim(),
+      position: (raw['position'] as String? ?? '').trim(),
+      phone: (raw['phone'] as String? ?? '').trim(),
+      email: email,
+      type: <String>{'to', 'cc', 'bcc'}.contains(type) ? type : 'to',
+    );
+  }
+}
+
+/// Persistable recipient details with contact records and legacy address lists.
 class _RecipientProfile {
   const _RecipientProfile({
     required this.company,
@@ -100,6 +140,7 @@ class _RecipientProfile {
     required this.to,
     required this.cc,
     required this.bcc,
+    this.contacts = const <_EmailRecipient>[],
   });
 
   final String company;
@@ -107,6 +148,7 @@ class _RecipientProfile {
   final String to;
   final String cc;
   final String bcc;
+  final List<_EmailRecipient> contacts;
 
   /// Whether at least one recipient field contains a value worth saving.
   bool get hasData {
@@ -114,7 +156,8 @@ class _RecipientProfile {
         department.isNotEmpty ||
         to.isNotEmpty ||
         cc.isNotEmpty ||
-        bcc.isNotEmpty;
+        bcc.isNotEmpty ||
+        contacts.isNotEmpty;
   }
 
   /// Compares every field case-insensitively for history deduplication.
@@ -123,17 +166,22 @@ class _RecipientProfile {
         department.toLowerCase() == other.department.toLowerCase() &&
         to.toLowerCase() == other.to.toLowerCase() &&
         cc.toLowerCase() == other.cc.toLowerCase() &&
-        bcc.toLowerCase() == other.bcc.toLowerCase();
+        bcc.toLowerCase() == other.bcc.toLowerCase() &&
+        jsonEncode(contacts.map((_EmailRecipient c) => c.toMap()).toList()) ==
+            jsonEncode(
+              other.contacts.map((_EmailRecipient c) => c.toMap()).toList(),
+            );
   }
 
   /// Encodes this profile for storage in the string-list database API.
   String toStorageString() {
-    return jsonEncode(<String, String>{
+    return jsonEncode(<String, dynamic>{
       'company': company,
       'department': department,
       'to': to,
       'cc': cc,
       'bcc': bcc,
+      'contacts': contacts.map((_EmailRecipient c) => c.toMap()).toList(),
     });
   }
 
@@ -150,6 +198,11 @@ class _RecipientProfile {
         to: (decoded['to'] as String? ?? '').trim(),
         cc: (decoded['cc'] as String? ?? '').trim(),
         bcc: (decoded['bcc'] as String? ?? '').trim(),
+        contacts: ((decoded['contacts'] as List<dynamic>?) ?? <dynamic>[])
+            .whereType<Map>()
+            .map(_EmailRecipient.fromMap)
+            .whereType<_EmailRecipient>()
+            .toList(),
       );
     } catch (_) {
       return null;
@@ -364,6 +417,13 @@ class _CoworkerEntry {
   final TextEditingController role = TextEditingController();
   bool isEditing = true;
 
+  List<TextEditingController> get controllers => <TextEditingController>[
+    name,
+    email,
+    phone,
+    role,
+  ];
+
   bool get hasData =>
       name.text.trim().isNotEmpty ||
       email.text.trim().isNotEmpty ||
@@ -386,6 +446,15 @@ class _CustomerMachineEntry {
   final TextEditingController modelName = TextEditingController();
   final TextEditingController modelNumber = TextEditingController();
   final TextEditingController serialNumber = TextEditingController();
+
+  List<TextEditingController> get controllers => <TextEditingController>[
+    customerMachineName,
+    machineNumber,
+    manufacturerMachineName,
+    modelName,
+    modelNumber,
+    serialNumber,
+  ];
 
   /// Whether any machine controller currently contains non-whitespace text.
   bool get hasData {

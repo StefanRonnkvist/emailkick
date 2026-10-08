@@ -3,6 +3,307 @@
 part of 'email_composer_page.dart';
 
 extension _EmailComposerSectionContent on _EmailComposerPageState {
+  Widget _buildCustomerToSelector() {
+    final String customerEmail = _selectedContentCustomer?.email.trim() ?? '';
+    final bool hasEmail = customerEmail.isNotEmpty;
+    final bool isCustomerInRecipientTable = _recipientContacts.any(
+      (_EmailRecipient contact) =>
+          contact.email.toLowerCase() == customerEmail.toLowerCase(),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Card(
+        child: ExpansionTile(
+          initiallyExpanded: _isCustomerToTableExpanded,
+          onExpansionChanged: (bool expanded) {
+            setState(() => _isCustomerToTableExpanded = expanded);
+            _saveDraftState();
+          },
+          title: const Text('Customer to To field'),
+          subtitle: Text(
+            _selectedContentCustomer == null
+                ? 'Select a saved customer first'
+                : hasEmail
+                ? customerEmail
+                : 'Selected customer has no email address',
+          ),
+          children: <Widget>[
+            if (_selectedContentCustomer == null)
+              const ListTile(title: Text('Choose a saved customer above.'))
+            else
+              CheckboxListTile(
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  _selectedContentCustomer!.name.trim().isEmpty
+                      ? 'Customer'
+                      : _selectedContentCustomer!.name.trim(),
+                ),
+                subtitle: Text(hasEmail ? customerEmail : 'No email address'),
+                value:
+                    hasEmail &&
+                    (isCustomerInRecipientTable ||
+                        _selectedCustomerToEmail?.toLowerCase() ==
+                            customerEmail.toLowerCase()),
+                onChanged: !hasEmail
+                    ? null
+                    : (bool? checked) => _setCustomerToSelection(
+                        customerEmail,
+                        checked ?? false,
+                      ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoworkerCcSelector() {
+    final int selectedCount = _recipientContacts
+        .where(
+          (_EmailRecipient contact) =>
+              _coworkers.any(
+                (_CoworkerEntry coworker) =>
+                    coworker.email.text.trim().toLowerCase() ==
+                    contact.email.toLowerCase(),
+              ) &&
+              contact.type == 'cc',
+        )
+        .length;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        child: ExpansionTile(
+          initiallyExpanded: _isCoworkerCcTableExpanded,
+          onExpansionChanged: (bool expanded) {
+            setState(() => _isCoworkerCcTableExpanded = expanded);
+            _saveDraftState();
+          },
+          title: const Text('Coworkers to CC field'),
+          subtitle: Text('$selectedCount selected'),
+          children: <Widget>[
+            if (_coworkers.isEmpty)
+              const ListTile(title: Text('No coworkers added yet.'))
+            else
+              ...List<Widget>.generate(_coworkers.length, (int index) {
+                final _CoworkerEntry coworker = _coworkers[index];
+                final String email = coworker.email.text.trim();
+                return CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(
+                    coworker.name.text.trim().isEmpty
+                        ? 'Coworker ${index + 1}'
+                        : coworker.name.text.trim(),
+                  ),
+                  subtitle: Text(email.isEmpty ? 'No email address' : email),
+                  value: _recipientContacts.any(
+                    (_EmailRecipient contact) =>
+                        contact.email.toLowerCase() == email.toLowerCase() &&
+                        contact.type == 'cc',
+                  ),
+                  onChanged: email.isEmpty
+                      ? null
+                      : (bool? checked) =>
+                            _setCoworkerCcSelection(index, checked ?? false),
+                );
+              }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _setCustomerToSelection(String email, bool selected) {
+    final String? previousCustomerEmail = _selectedCustomerToEmail;
+    final String normalizedEmail = email.trim().toLowerCase();
+    setState(() {
+      _selectedCustomerToEmail = selected ? email.trim() : null;
+      final int existingContactIndex = _recipientContacts.indexWhere(
+        (_EmailRecipient contact) =>
+            contact.email.toLowerCase() == normalizedEmail,
+      );
+      if (selected && _selectedContentCustomer != null) {
+        final _EmailRecipient customerContact = _EmailRecipient(
+          name: _selectedContentCustomer!.name,
+          position: 'Customer',
+          phone: _selectedContentCustomer!.phone,
+          email: email.trim(),
+          type: 'to',
+        );
+        if (existingContactIndex < 0) {
+          _recipientContacts.add(customerContact);
+        } else {
+          final _EmailRecipient existing =
+              _recipientContacts[existingContactIndex];
+          _recipientContacts[existingContactIndex] = _EmailRecipient(
+            name: existing.name.isEmpty ? customerContact.name : existing.name,
+            position: existing.position.isEmpty
+                ? customerContact.position
+                : existing.position,
+            phone: existing.phone.isEmpty
+                ? customerContact.phone
+                : existing.phone,
+            email: existing.email,
+            type: 'to',
+          );
+        }
+      } else if (!selected && existingContactIndex >= 0) {
+        final _EmailRecipient existing =
+            _recipientContacts[existingContactIndex];
+        if (existing.position == 'Customer') {
+          _recipientContacts.removeAt(existingContactIndex);
+        } else if (existing.type == 'to') {
+          final String newType =
+              existing.email.toLowerCase() ==
+                  previousCustomerEmail?.toLowerCase()
+              ? 'cc'
+              : 'to';
+          _recipientContacts[existingContactIndex] = _EmailRecipient(
+            name: existing.name,
+            position: existing.position,
+            phone: existing.phone,
+            email: existing.email,
+            type: newType,
+          );
+        }
+      }
+      _syncRecipientContactFields();
+    });
+    _saveDraftState();
+  }
+
+  void _setCoworkerCcSelection(int index, bool selected) {
+    if (index < 0 || index >= _coworkers.length) {
+      return;
+    }
+    final _CoworkerEntry coworker = _coworkers[index];
+    final String email = coworker.email.text.trim();
+    final String normalizedEmail = email.toLowerCase();
+    setState(() {
+      if (selected) {
+        _selectedCoworkerCcEmails.add(normalizedEmail);
+        final int existingContactIndex = _recipientContacts.indexWhere(
+          (_EmailRecipient contact) =>
+              contact.email.toLowerCase() == normalizedEmail,
+        );
+        final String position = coworker.role.text.trim();
+        if (existingContactIndex < 0) {
+          _recipientContacts.add(
+            _EmailRecipient(
+              name: coworker.name.text.trim(),
+              position: position,
+              phone: coworker.phone.text.trim(),
+              email: email,
+              type: 'cc',
+            ),
+          );
+        } else {
+          final _EmailRecipient existing =
+              _recipientContacts[existingContactIndex];
+          _recipientContacts[existingContactIndex] = _EmailRecipient(
+            name: existing.name.isEmpty
+                ? coworker.name.text.trim()
+                : existing.name,
+            position: existing.position.isEmpty ? position : existing.position,
+            phone: existing.phone.isEmpty
+                ? coworker.phone.text.trim()
+                : existing.phone,
+            email: existing.email,
+            type: 'cc',
+          );
+        }
+      } else {
+        _selectedCoworkerCcEmails.remove(normalizedEmail);
+        final int selectedContactIndex = _recipientContacts.indexWhere(
+          (_EmailRecipient contact) =>
+              contact.email.toLowerCase() == normalizedEmail &&
+              contact.position == coworker.role.text.trim(),
+        );
+        if (selectedContactIndex >= 0) {
+          final _EmailRecipient contact =
+              _recipientContacts[selectedContactIndex];
+          _recipientContacts[selectedContactIndex] = _EmailRecipient(
+            name: contact.name,
+            position: contact.position,
+            phone: contact.phone,
+            email: contact.email,
+            type: 'to',
+          );
+        }
+      }
+      _syncRecipientContactFields();
+    });
+    _saveDraftState();
+  }
+
+  void _syncSelectedCoworkersToCc() {
+    final Set<String> selectedCoworkerEmails = _selectedCoworkerCcEmails;
+    final Set<String> coworkerEmails = _coworkers
+        .map(
+          (_CoworkerEntry coworker) => coworker.email.text.trim().toLowerCase(),
+        )
+        .where((String email) => email.isNotEmpty)
+        .toSet();
+    _recipientContacts.removeWhere(
+      (_EmailRecipient contact) =>
+          coworkerEmails.contains(contact.email.toLowerCase()) &&
+          contact.position.isNotEmpty &&
+          _coworkers.any(
+            (_CoworkerEntry coworker) =>
+                coworker.email.text.trim().toLowerCase() ==
+                    contact.email.toLowerCase() &&
+                coworker.role.text.trim().toLowerCase() ==
+                    contact.position.toLowerCase(),
+          ) &&
+          !selectedCoworkerEmails.contains(contact.email.toLowerCase()),
+    );
+    final Set<String> recipientEmails = _recipientContacts
+        .where((_EmailRecipient contact) => contact.type == 'cc')
+        .map((_EmailRecipient contact) => contact.email.trim().toLowerCase())
+        .toSet();
+    for (final String email in _selectedCoworkerCcEmails) {
+      if (email.isEmpty) {
+        continue;
+      }
+      final int existingContactIndex = _recipientContacts.indexWhere(
+        (_EmailRecipient contact) =>
+            contact.email.trim().toLowerCase() == email,
+      );
+      if (existingContactIndex >= 0) {
+        final _EmailRecipient existing =
+            _recipientContacts[existingContactIndex];
+        _recipientContacts[existingContactIndex] = _EmailRecipient(
+          name: existing.name,
+          position: existing.position,
+          phone: existing.phone,
+          email: existing.email,
+          type: 'cc',
+        );
+        recipientEmails.add(email);
+        continue;
+      }
+      final _CoworkerEntry? coworker = _coworkers
+          .cast<_CoworkerEntry?>()
+          .firstWhere(
+            (_CoworkerEntry? entry) =>
+                entry?.email.text.trim().toLowerCase() == email,
+            orElse: () => null,
+          );
+      if (coworker != null) {
+        _recipientContacts.add(
+          _EmailRecipient(
+            name: coworker.name.text.trim(),
+            position: coworker.role.text.trim(),
+            phone: coworker.phone.text.trim(),
+            email: coworker.email.text.trim(),
+            type: 'cc',
+          ),
+        );
+        recipientEmails.add(email);
+      }
+    }
+    _syncRecipientContactFields();
+  }
+
   Widget _contentCard() {
     final List<String> recipientOptions = _contentRecipientSelectionOptions();
     final List<String> customerOptions = _contentCustomerSelectionOptions();
@@ -19,6 +320,8 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
     return _SectionCard(
       title: 'Content',
       children: <Widget>[
+        _buildCustomerToSelector(),
+        _buildCoworkerCcSelector(),
         if (recipientOptions.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -49,6 +352,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
                 }
                 _contentRecipientSelectorController.text = value;
                 _applySavedRecipientFromSelection(value);
+                _saveDraftState();
               },
             ),
           ),
@@ -82,6 +386,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
                 }
                 _contentCustomerSelectorController.text = value;
                 _applySavedCustomerFromSelection(value);
+                _saveDraftState();
               },
             ),
           ),
@@ -123,6 +428,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
                 }
                 _contentMachineSelectorController.text = value;
                 _applySavedMachineFromSelection(value);
+                _saveDraftState();
               },
             ),
           ),
@@ -140,8 +446,12 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
           onValueCommitted: (String value) {
             _commitContentOption(value, target: _workOrderOptions);
             _syncPreheaderFromOrderFields();
+            _saveDraftState();
           },
-          onChanged: (_) => _syncPreheaderFromOrderFields(),
+          onChanged: (_) {
+            _syncPreheaderFromOrderFields();
+            _saveDraftState();
+          },
         ),
         _dropdownTextBox(
           _purchaseOrderController,
@@ -152,8 +462,12 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
           onValueCommitted: (String value) {
             _commitContentOption(value, target: _purchaseOrderOptions);
             _syncPreheaderFromOrderFields();
+            _saveDraftState();
           },
-          onChanged: (_) => _syncPreheaderFromOrderFields(),
+          onChanged: (_) {
+            _syncPreheaderFromOrderFields();
+            _saveDraftState();
+          },
         ),
         _dropdownTextBox(
           _partNumberController,
@@ -163,7 +477,9 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
           options: _partNumberOptions,
           onValueCommitted: (String value) {
             _commitContentOption(value, target: _partNumberOptions);
+            _saveDraftState();
           },
+          onChanged: (_) => _saveDraftState(),
         ),
         _dropdownTextBox(
           _partDescriptionController,
@@ -173,7 +489,9 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
           options: _partDescriptionOptions,
           onValueCommitted: (String value) {
             _commitContentOption(value, target: _partDescriptionOptions);
+            _saveDraftState();
           },
+          onChanged: (_) => _saveDraftState(),
         ),
         Text(
           'Content Mode',
@@ -194,6 +512,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
               }
               _syncSubjectFromContentModes();
             });
+            _saveDraftState();
           },
         ),
         CheckboxListTile(
@@ -209,6 +528,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
               }
               _syncSubjectFromContentModes();
             });
+            _saveDraftState();
           },
         ),
         CheckboxListTile(
@@ -224,6 +544,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
               }
               _syncSubjectFromContentModes();
             });
+            _saveDraftState();
           },
         ),
         CheckboxListTile(
@@ -239,6 +560,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
               }
               _syncSubjectFromContentModes();
             });
+            _saveDraftState();
           },
         ),
         CheckboxListTile(
@@ -254,6 +576,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
               }
               _syncSubjectFromContentModes();
             });
+            _saveDraftState();
           },
         ),
         CheckboxListTile(
@@ -269,6 +592,7 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
               }
               _syncSubjectFromContentModes();
             });
+            _saveDraftState();
           },
         ),
         const SizedBox(height: 8),
@@ -311,7 +635,9 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
           },
           onValueCommitted: (String value) {
             _commitContentOption(value, target: _subjectOptions);
+            _saveDraftState();
           },
+          onChanged: (_) => _saveDraftState(),
         ),
         _dropdownTextBox(
           _preheaderController,
@@ -321,7 +647,9 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
           options: _preheaderOptions,
           onValueCommitted: (String value) {
             _commitContentOption(value, target: _preheaderOptions);
+            _saveDraftState();
           },
+          onChanged: (_) => _saveDraftState(),
         ),
         _dropdownTextBox(
           _plainTextBodyController,
@@ -336,7 +664,9 @@ extension _EmailComposerSectionContent on _EmailComposerPageState {
           },
           onValueCommitted: (String value) {
             _commitContentOption(value, target: _plainTextBodyOptions);
+            _saveDraftState();
           },
+          onChanged: (_) => _saveDraftState(),
           maxLines: 8,
           minLines: 5,
         ),

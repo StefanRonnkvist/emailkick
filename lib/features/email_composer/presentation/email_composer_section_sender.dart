@@ -50,11 +50,16 @@ extension _EmailComposerSectionSender on _EmailComposerPageState {
             _commitSingleValueOption(value, target: _senderNameOptions);
             _commitSenderProfile();
             _saveSenderSetup();
+            _saveDraftState();
           },
           onOptionSelected: (String value) {
             _applySenderProfileFromField(_ProfileField.fromName, value);
+            _saveDraftState();
           },
-          onChanged: (_) => _saveSenderSetup(),
+          onChanged: (_) {
+            _saveSenderSetup();
+            _saveDraftState();
+          },
         ),
         _dropdownTextBox(
           _fromEmailController,
@@ -67,11 +72,16 @@ extension _EmailComposerSectionSender on _EmailComposerPageState {
             _commitSingleValueOption(value, target: _senderEmailOptions);
             _commitSenderProfile();
             _saveSenderSetup();
+            _saveDraftState();
           },
           onOptionSelected: (String value) {
             _applySenderProfileFromField(_ProfileField.fromEmail, value);
+            _saveDraftState();
           },
-          onChanged: (_) => _saveSenderSetup(),
+          onChanged: (_) {
+            _saveSenderSetup();
+            _saveDraftState();
+          },
         ),
         _dropdownTextBox(
           _replyToController,
@@ -84,11 +94,16 @@ extension _EmailComposerSectionSender on _EmailComposerPageState {
             _commitSingleValueOption(value, target: _replyToOptions);
             _commitSenderProfile();
             _handleReplyToChanged(value);
+            _saveDraftState();
           },
           onOptionSelected: (String value) {
             _applySenderProfileFromField(_ProfileField.replyTo, value);
+            _saveDraftState();
           },
-          onChanged: _handleReplyToChanged,
+          onChanged: (String value) {
+            _handleReplyToChanged(value);
+            _saveDraftState();
+          },
         ),
         _dropdownTextBox(
           _phoneController,
@@ -101,11 +116,16 @@ extension _EmailComposerSectionSender on _EmailComposerPageState {
             _commitSingleValueOption(value, target: _senderPhoneOptions);
             _commitSenderProfile();
             _saveSenderSetup();
+            _saveDraftState();
           },
           onOptionSelected: (String value) {
             _applySenderProfileFromField(_ProfileField.phone, value);
+            _saveDraftState();
           },
-          onChanged: (_) => _saveSenderSetup(),
+          onChanged: (_) {
+            _saveSenderSetup();
+            _saveDraftState();
+          },
         ),
         Wrap(
           spacing: 12,

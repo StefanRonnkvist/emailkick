@@ -47,7 +47,7 @@ class HelpAnalysisCard extends StatelessWidget {
         icon: Icons.route_outlined,
         items: <String>[
           'Sender stores your identity: From Name, From Email, Reply-To, and Phone. Recipients holds Company, Department, and the To, Cc, and Bcc lists.',
-          'Customer stores customer contact details, a shipping address, and one or more machine records. Coworkers lets you add multiple contact rows, edit or delete each one, and includes their details in the draft email.',
+          'Recipients and customer contact information are together in the Contacts section. Coworkers lets you add multiple contact rows, edit or delete each one, and includes their details in the draft email.',
           'In Content, choose service modes to build the subject. Work Order and Purchase Order build the preheader; both fields remain editable.',
           'Enter the plain-text body, select any document references, then use Open Draft in Mail App.',
         ],
@@ -197,6 +197,14 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
   final TextEditingController _toController = TextEditingController();
   final TextEditingController _ccController = TextEditingController();
   final TextEditingController _bccController = TextEditingController();
+  final TextEditingController _recipientNameController =
+      TextEditingController();
+  final TextEditingController _recipientPositionController =
+      TextEditingController();
+  final TextEditingController _recipientPhoneController =
+      TextEditingController();
+  final TextEditingController _recipientEmailController =
+      TextEditingController();
   final TextEditingController _companyController = TextEditingController();
   final TextEditingController _departmentController = TextEditingController();
   final TextEditingController _customerNameController = TextEditingController();
@@ -213,15 +221,14 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
   final TextEditingController _contentMachineSelectorController =
       TextEditingController();
   final List<_CoworkerEntry> _coworkers = <_CoworkerEntry>[_CoworkerEntry()];
+  final List<TextEditingController> _coworkerDraftControllers =
+      <TextEditingController>[];
   final FocusNode _fromNameFocusNode = FocusNode();
   final FocusNode _fromEmailFocusNode = FocusNode();
   final FocusNode _replyToFocusNode = FocusNode();
   final FocusNode _senderPhoneFocusNode = FocusNode();
   final FocusNode _companyFocusNode = FocusNode();
   final FocusNode _departmentFocusNode = FocusNode();
-  final FocusNode _toFocusNode = FocusNode();
-  final FocusNode _ccFocusNode = FocusNode();
-  final FocusNode _bccFocusNode = FocusNode();
   final FocusNode _customerNameFocusNode = FocusNode();
   final FocusNode _customerEmailFocusNode = FocusNode();
   final FocusNode _customerPhoneFocusNode = FocusNode();
@@ -245,8 +252,6 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
   List<String> _toOptions = <String>[];
   List<String> _ccOptions = <String>[];
   List<String> _bccOptions = <String>[];
-  List<String> _customerNameOptions = <String>[];
-  List<String> _customerEmailOptions = <String>[];
   List<String> _customerPhoneOptions = <String>[];
   List<String> _customerAddressOptions = <String>[];
   List<String> _workOrderOptions = <String>[];
@@ -259,6 +264,8 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
 
   List<_SenderProfile> _senderProfiles = <_SenderProfile>[];
   List<_RecipientProfile> _recipientProfiles = <_RecipientProfile>[];
+  final List<_EmailRecipient> _recipientContacts = <_EmailRecipient>[];
+  String _recipientContactType = 'to';
   List<_CustomerProfile> _customerProfiles = <_CustomerProfile>[];
   List<_SavedCustomerEntry> _savedCustomerEntries = <_SavedCustomerEntry>[];
 
@@ -279,13 +286,18 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
   final Set<_ContentMode> _selectedContentModes = <_ContentMode>{};
   bool _isRestoringDraft = false;
   bool _isSenderCollapsed = false;
-  bool _isRecipientsCollapsed = true;
   int _selectedSectionIndex = 0;
   int? _expandedCustomerIndex;
   _SavedCustomerEntry? _selectedContentCustomer;
   List<_SavedCustomerMachine> _selectedContentCustomerMachines =
       <_SavedCustomerMachine>[];
   _RecipientProfile? _editingRecipientProfile;
+  final Set<String> _selectedCoworkerCcEmails = <String>{};
+  bool _isCoworkerCcTableExpanded = false;
+  bool _isCustomerToTableExpanded = false;
+  String? _selectedCustomerToEmail;
+  int? _editingRecipientContact;
+  int _draftSaveRevision = 0;
 
   List<TextEditingController> get _draftControllers => <TextEditingController>[
     _fromNameController,
@@ -295,6 +307,10 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _toController,
     _ccController,
     _bccController,
+    _recipientNameController,
+    _recipientPositionController,
+    _recipientPhoneController,
+    _recipientEmailController,
     _companyController,
     _departmentController,
     _customerNameController,
@@ -308,6 +324,9 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _partDescriptionController,
     _preheaderController,
     _plainTextBodyController,
+    _contentRecipientSelectorController,
+    _contentCustomerSelectorController,
+    _contentMachineSelectorController,
   ];
 
   @override
@@ -318,6 +337,10 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _customerMachines.add(_CustomerMachineEntry());
     _fromEmailController.addListener(_handleFromEmailChanged);
     _bindDraftListeners();
+    for (final _CustomerMachineEntry machine in _customerMachines) {
+      _bindMachineDraftListeners(machine);
+    }
+    _bindCoworkerDraftListeners();
     _syncSubjectFromContentModes();
     _syncPreheaderFromOrderFields();
     _restoreAllState();
@@ -334,6 +357,10 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _toController.dispose();
     _ccController.dispose();
     _bccController.dispose();
+    _recipientNameController.dispose();
+    _recipientPositionController.dispose();
+    _recipientPhoneController.dispose();
+    _recipientEmailController.dispose();
     _companyController.dispose();
     _departmentController.dispose();
     _customerNameController.dispose();
@@ -343,6 +370,7 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _contentCustomerSelectorController.dispose();
     _contentRecipientSelectorController.dispose();
     _contentMachineSelectorController.dispose();
+    _unbindCoworkerDraftListeners();
     for (final _CoworkerEntry coworker in _coworkers) {
       coworker.dispose();
     }
@@ -352,9 +380,6 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _senderPhoneFocusNode.dispose();
     _companyFocusNode.dispose();
     _departmentFocusNode.dispose();
-    _toFocusNode.dispose();
-    _ccFocusNode.dispose();
-    _bccFocusNode.dispose();
     _customerNameFocusNode.dispose();
     _customerEmailFocusNode.dispose();
     _customerPhoneFocusNode.dispose();
@@ -376,6 +401,7 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     _preheaderController.dispose();
     _plainTextBodyController.dispose();
     for (final _CustomerMachineEntry machine in _customerMachines) {
+      _unbindMachineDraftListeners(machine);
       machine.dispose();
     }
     super.dispose();
@@ -509,8 +535,7 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
   List<String> _sectionTitles() {
     return <String>[
       'Sender',
-      'Recipients',
-      'Customer',
+      'Contacts',
       'Coworker',
       'Content',
       'Actions',
@@ -522,8 +547,7 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
   List<IconData> _sectionIcons() {
     return <IconData>[
       Icons.person_outline,
-      Icons.group_outlined,
-      Icons.badge_outlined,
+      Icons.contacts_outlined,
       Icons.contact_mail_outlined,
       Icons.description_outlined,
       Icons.playlist_add_check_outlined,
@@ -538,18 +562,16 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
       case 0:
         return _senderCard();
       case 1:
-        return _recipientCard();
+        return _contactsCard();
       case 2:
-        return _customerCard();
-      case 3:
         return _coworkerCard();
-      case 4:
+      case 3:
         return _contentCard();
-      case 5:
+      case 4:
         return _actionsCard();
-      case 6:
+      case 5:
         return _informationCard();
-      case 7:
+      case 6:
         return _helpCard();
       default:
         return _senderCard();
@@ -576,33 +598,6 @@ class _EmailComposerPageState extends State<EmailComposerPage> {
     if (!_emailRegExp.hasMatch(v)) {
       return 'Enter a valid email address';
     }
-    return null;
-  }
-
-  /// Validates an optional comma-separated email list.
-  String? _validateOptionalEmailList(String? value) {
-    return _validateEmailList(value, required: false);
-  }
-
-  /// Validates each address and optionally requires at least one recipient.
-  String? _validateEmailList(String? value, {required bool required}) {
-    final String raw = (value ?? '').trim();
-
-    if (raw.isEmpty) {
-      return required ? 'Required' : null;
-    }
-
-    final List<String> emails = _splitList(raw);
-    if (emails.isEmpty) {
-      return required ? 'Required' : null;
-    }
-
-    for (final String email in emails) {
-      if (!_emailRegExp.hasMatch(email)) {
-        return 'Invalid email: $email';
-      }
-    }
-
     return null;
   }
 }

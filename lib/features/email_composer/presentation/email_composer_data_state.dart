@@ -302,6 +302,10 @@ extension _EmailComposerDataState on _EmailComposerPageState {
       _toController,
       _ccController,
       _bccController,
+      _recipientNameController,
+      _recipientPositionController,
+      _recipientPhoneController,
+      _recipientEmailController,
       _companyController,
       _departmentController,
       _customerNameController,
@@ -323,8 +327,10 @@ extension _EmailComposerDataState on _EmailComposerPageState {
     }
 
     for (final _CustomerMachineEntry machine in _customerMachines) {
+      _unbindMachineDraftListeners(machine);
       machine.dispose();
     }
+    _unbindCoworkerDraftListeners();
     for (final _CoworkerEntry coworker in _coworkers) {
       coworker.dispose();
     }
@@ -333,9 +339,12 @@ extension _EmailComposerDataState on _EmailComposerPageState {
       _coworkers
         ..clear()
         ..add(_CoworkerEntry());
+      _bindCoworkerDraftListeners();
+      final _CustomerMachineEntry initialMachine = _CustomerMachineEntry();
+      _bindMachineDraftListeners(initialMachine);
       _customerMachines
         ..clear()
-        ..add(_CustomerMachineEntry());
+        ..add(initialMachine);
       _senderNameOptions = <String>[];
       _senderEmailOptions = <String>[];
       _replyToOptions = <String>[];
@@ -345,8 +354,6 @@ extension _EmailComposerDataState on _EmailComposerPageState {
       _toOptions = <String>[];
       _ccOptions = <String>[];
       _bccOptions = <String>[];
-      _customerNameOptions = <String>[];
-      _customerEmailOptions = <String>[];
       _customerPhoneOptions = <String>[];
       _customerAddressOptions = <String>[];
       _workOrderOptions = <String>[];
@@ -358,15 +365,25 @@ extension _EmailComposerDataState on _EmailComposerPageState {
       _plainTextBodyOptions = <String>[];
       _senderProfiles = <_SenderProfile>[];
       _recipientProfiles = <_RecipientProfile>[];
+      _recipientContacts.clear();
+      _editingRecipientContact = null;
+      _recipientNameController.clear();
+      _recipientPositionController.clear();
+      _recipientPhoneController.clear();
+      _recipientEmailController.clear();
+      _recipientContactType = 'to';
       _customerProfiles = <_CustomerProfile>[];
       _savedCustomerEntries = <_SavedCustomerEntry>[];
       _selectedContentModes.clear();
       _selectedDocuments.clear();
       _selectedContentCustomer = null;
       _selectedContentCustomerMachines = <_SavedCustomerMachine>[];
+      _selectedCoworkerCcEmails.clear();
+      _isCustomerToTableExpanded = false;
+      _isCoworkerCcTableExpanded = false;
+      _selectedCustomerToEmail = null;
       _editingRecipientProfile = null;
       _isSenderCollapsed = false;
-      _isRecipientsCollapsed = true;
     });
 
     if (!mounted) {
@@ -932,6 +949,20 @@ extension _EmailComposerDataState on _EmailComposerPageState {
     }
   }
 
+  /// Adds draft autosave listeners to all machine controllers.
+  void _bindMachineDraftListeners(_CustomerMachineEntry machine) {
+    for (final TextEditingController controller in machine.controllers) {
+      controller.addListener(_saveDraftState);
+    }
+  }
+
+  /// Removes draft autosave listeners before machine controllers are disposed.
+  void _unbindMachineDraftListeners(_CustomerMachineEntry machine) {
+    for (final TextEditingController controller in machine.controllers) {
+      controller.removeListener(_saveDraftState);
+    }
+  }
+
   /// Builds one coworker entry from its draft JSON fields.
   _CoworkerEntry _coworkerFromMap(Map raw) {
     final _CoworkerEntry coworker = _CoworkerEntry();
@@ -972,8 +1003,12 @@ extension _EmailComposerDataState on _EmailComposerPageState {
         (decoded['contentModes'] as List<dynamic>?) ?? <dynamic>[];
     final List<dynamic> docsRaw =
         (decoded['documents'] as List<dynamic>?) ?? <dynamic>[];
+    final List<dynamic> selectedCoworkerCcEmailsRaw =
+        (decoded['selectedCoworkerCcEmails'] as List<dynamic>?) ?? <dynamic>[];
     final List<dynamic> machinesRaw =
         (decoded['machines'] as List<dynamic>?) ?? <dynamic>[];
+    final List<dynamic> recipientContactsRaw =
+        (decoded['recipientContacts'] as List<dynamic>?) ?? <dynamic>[];
     final List<_CoworkerEntry>? restoredCoworkers =
         decoded.containsKey('coworkers')
         ? <_CoworkerEntry>[
@@ -984,6 +1019,7 @@ extension _EmailComposerDataState on _EmailComposerPageState {
         : null;
 
     _isRestoringDraft = true;
+    _unbindCoworkerDraftListeners();
 
     _fromNameController.text =
         (fields['fromName'] as String?) ?? _fromNameController.text;
@@ -996,6 +1032,15 @@ extension _EmailComposerDataState on _EmailComposerPageState {
     _toController.text = (fields['to'] as String?) ?? _toController.text;
     _ccController.text = (fields['cc'] as String?) ?? _ccController.text;
     _bccController.text = (fields['bcc'] as String?) ?? _bccController.text;
+    _recipientNameController.text =
+        (fields['recipientName'] as String?) ?? _recipientNameController.text;
+    _recipientPositionController.text =
+        (fields['recipientPosition'] as String?) ??
+        _recipientPositionController.text;
+    _recipientPhoneController.text =
+        (fields['recipientPhone'] as String?) ?? _recipientPhoneController.text;
+    _recipientEmailController.text =
+        (fields['recipientEmail'] as String?) ?? _recipientEmailController.text;
     _companyController.text =
         (fields['company'] as String?) ?? _companyController.text;
     _departmentController.text =
@@ -1057,6 +1102,7 @@ extension _EmailComposerDataState on _EmailComposerPageState {
         continue;
       }
       final _CustomerMachineEntry machine = _CustomerMachineEntry();
+      _bindMachineDraftListeners(machine);
       machine.customerMachineName.text =
           (item['customerMachineName'] as String?) ?? '';
       machine.machineNumber.text = (item['machineNumber'] as String?) ?? '';
@@ -1101,19 +1147,89 @@ extension _EmailComposerDataState on _EmailComposerPageState {
           ..clear()
           ..addAll(restoredCoworkers);
       }
+      _coworkerDraftControllers.clear();
+      _bindCoworkerDraftListeners();
+      _selectedCoworkerCcEmails
+        ..clear()
+        ..addAll(
+          selectedCoworkerCcEmailsRaw.whereType<String>().map(
+            (String email) => email.toLowerCase(),
+          ),
+        );
+      _recipientContacts
+        ..clear()
+        ..addAll(
+          recipientContactsRaw
+              .whereType<Map>()
+              .map(_EmailRecipient.fromMap)
+              .whereType<_EmailRecipient>(),
+        );
+      final String? selectedCustomerToEmail =
+          decoded['selectedCustomerToEmail'] as String?;
+      _selectedCustomerToEmail = selectedCustomerToEmail?.isEmpty ?? true
+          ? null
+          : selectedCustomerToEmail;
+      final int? editingRecipientContact =
+          (decoded['editingRecipientContact'] as num?)?.toInt();
+      _editingRecipientContact =
+          editingRecipientContact != null &&
+              editingRecipientContact >= 0 &&
+              editingRecipientContact < _recipientContacts.length
+          ? editingRecipientContact
+          : null;
+      final String recipientContactType =
+          decoded['recipientContactType'] as String? ?? 'to';
+      _recipientContactType =
+          <String>{'to', 'cc', 'bcc'}.contains(recipientContactType)
+          ? recipientContactType
+          : 'to';
+      _isCoworkerCcTableExpanded =
+          decoded['isCoworkerCcTableExpanded'] as bool? ?? false;
+      _isCustomerToTableExpanded =
+          decoded['isCustomerToTableExpanded'] as bool? ?? false;
+      if (_recipientContacts.isNotEmpty) {
+        _syncRecipientContactFields();
+      } else {
+        _recipientContacts.addAll(
+          <(String, String)>[
+            ('to', _toController.text),
+            ('cc', _ccController.text),
+            ('bcc', _bccController.text),
+          ].expand(
+            ((String, String) assignment) => assignment.$2
+                .split(',')
+                .map((String email) => email.trim())
+                .where((String email) => email.isNotEmpty)
+                .map(
+                  (String email) => _EmailRecipient(
+                    name: '',
+                    position: '',
+                    phone: '',
+                    email: email,
+                    type: assignment.$1,
+                  ),
+                ),
+          ),
+        );
+      }
       for (final _CustomerMachineEntry machine in _customerMachines) {
+        _unbindMachineDraftListeners(machine);
         machine.dispose();
+      }
+      final List<_CustomerMachineEntry> machinesToRestore =
+          restoredMachines.isEmpty
+          ? <_CustomerMachineEntry>[_CustomerMachineEntry()]
+          : restoredMachines;
+      for (final _CustomerMachineEntry machine in machinesToRestore) {
+        _bindMachineDraftListeners(machine);
       }
       _customerMachines
         ..clear()
-        ..addAll(
-          restoredMachines.isEmpty
-              ? <_CustomerMachineEntry>[_CustomerMachineEntry()]
-              : restoredMachines,
-        );
+        ..addAll(machinesToRestore);
     });
 
     _isRestoringDraft = false;
+    _saveDraftState();
   }
 
   /// Persists the current draft unless a restore is currently populating it.
@@ -1121,6 +1237,9 @@ extension _EmailComposerDataState on _EmailComposerPageState {
     if (_isRestoringDraft) {
       return;
     }
+    _syncRecipientContactFields();
+    final int revision = _draftSaveRevision + 1;
+    _draftSaveRevision = revision;
 
     final Map<String, dynamic> draft = <String, dynamic>{
       'fields': <String, String>{
@@ -1131,6 +1250,10 @@ extension _EmailComposerDataState on _EmailComposerPageState {
         'to': _toController.text,
         'cc': _ccController.text,
         'bcc': _bccController.text,
+        'recipientName': _recipientNameController.text,
+        'recipientPosition': _recipientPositionController.text,
+        'recipientPhone': _recipientPhoneController.text,
+        'recipientEmail': _recipientEmailController.text,
         'company': _companyController.text,
         'department': _departmentController.text,
         'customerName': _customerNameController.text,
@@ -1166,6 +1289,15 @@ extension _EmailComposerDataState on _EmailComposerPageState {
             },
           )
           .toList(),
+      'recipientContacts': _recipientContacts
+          .map((_EmailRecipient contact) => contact.toMap())
+          .toList(),
+      'recipientContactType': _recipientContactType,
+      'editingRecipientContact': _editingRecipientContact,
+      'selectedCoworkerCcEmails': _selectedCoworkerCcEmails.toList(),
+      'selectedCustomerToEmail': _selectedCustomerToEmail ?? '',
+      'isCoworkerCcTableExpanded': _isCoworkerCcTableExpanded,
+      'isCustomerToTableExpanded': _isCustomerToTableExpanded,
       'machines': _customerMachines
           .map(
             (_CustomerMachineEntry machine) => <String, dynamic>{
@@ -1181,7 +1313,9 @@ extension _EmailComposerDataState on _EmailComposerPageState {
           .toList(),
     };
 
-    await AppDb.instance.setString(_draftStateKey, jsonEncode(draft));
+    if (_draftSaveRevision == revision) {
+      await AppDb.instance.setString(_draftStateKey, jsonEncode(draft));
+    }
   }
 
   /// Restores sender fields and derives whether reply-to was manually changed.
@@ -1413,14 +1547,6 @@ extension _EmailComposerDataState on _EmailComposerPageState {
 
   /// Rebuilds customer autocomplete lists from current fields and history.
   void _refreshCustomerOptionsFromProfiles() {
-    _customerNameOptions = _collectUniqueValues(<String>[
-      _customerNameController.text,
-      ..._customerProfiles.map((profile) => profile.name),
-    ]);
-    _customerEmailOptions = _collectUniqueValues(<String>[
-      _customerEmailController.text,
-      ..._customerProfiles.map((profile) => profile.email),
-    ]);
     _customerPhoneOptions = _collectUniqueValues(<String>[
       _customerPhoneController.text,
       ..._customerProfiles.map((profile) => profile.phone),

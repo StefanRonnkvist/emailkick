@@ -64,7 +64,7 @@ extension _EmailComposerMail on _EmailComposerPageState {
       return;
     }
 
-    final List<String> toList = _splitList(_toController.text);
+    final List<String> toList = _recipientEmailsFor('to', _toController.text);
     if (toList.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('At least one To recipient is required.')),
@@ -72,8 +72,11 @@ extension _EmailComposerMail on _EmailComposerPageState {
       return;
     }
 
-    final List<String> ccList = _splitList(_ccController.text);
-    final List<String> bccList = _splitList(_bccController.text);
+    final List<String> ccList = _recipientEmailsFor('cc', _ccController.text);
+    final List<String> bccList = _recipientEmailsFor(
+      'bcc',
+      _bccController.text,
+    );
 
     _commitRecipientOption(_companyController.text, forCompany: true);
     _commitRecipientOption(_departmentController.text, forCompany: false);
@@ -159,12 +162,20 @@ extension _EmailComposerMail on _EmailComposerPageState {
     return lines.join('\n');
   }
 
-  /// Splits a comma-separated address field and removes empty segments.
-  List<String> _splitList(String raw) {
-    return raw
+  /// Uses selected recipient rows to form addresses for To, Cc, and Bcc.
+  List<String> _recipientEmailsFor(String type, String fallback) {
+    final List<String> selected = _recipientContacts
+        .where((_EmailRecipient contact) => contact.type == type)
+        .map((_EmailRecipient contact) => contact.email.trim())
+        .where((String email) => email.isNotEmpty)
+        .toList();
+    if (selected.isNotEmpty) {
+      return selected;
+    }
+    return fallback
         .split(',')
-        .map((String s) => s.trim())
-        .where((String s) => s.isNotEmpty)
+        .map((String email) => email.trim())
+        .where((String email) => email.isNotEmpty)
         .toList();
   }
 

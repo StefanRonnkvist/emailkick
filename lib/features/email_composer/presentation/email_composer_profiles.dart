@@ -62,6 +62,7 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
       to: _toController.text.trim(),
       cc: _ccController.text.trim(),
       bcc: _bccController.text.trim(),
+      contacts: List<_EmailRecipient>.from(_recipientContacts),
     );
     if (!profile.hasData) {
       return;
@@ -131,6 +132,13 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
     _toController.text = profile.to;
     _ccController.text = profile.cc;
     _bccController.text = profile.bcc;
+    _selectedCoworkerCcEmails.clear();
+    _selectedCustomerToEmail = null;
+    _recipientContacts
+      ..clear()
+      ..addAll(_contactsForRecipientProfile(profile));
+    _syncRecipientContactFields();
+    _saveDraftState();
   }
 
   /// Finds a customer by one field and applies its complete saved profile.
@@ -144,6 +152,7 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
     _customerEmailController.text = profile.email;
     _customerPhoneController.text = profile.phone;
     _customerShippingAddressController.text = profile.shippingAddress;
+    _saveDraftState();
   }
 
   /// Returns the first sender whose selected field matches [value].
@@ -246,7 +255,11 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
     String rawValue, {
     required List<String> target,
   }) {
-    final List<String> values = _splitList(rawValue);
+    final List<String> values = rawValue
+        .split(',')
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toList();
     if (values.isEmpty) {
       return;
     }
@@ -268,18 +281,16 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
     }
   }
 
-  /// Saves recipient options and profile, then collapses the section.
+  /// Saves recipient options and profile.
   void _saveRecipients() {
     _commitRecipientOption(_companyController.text, forCompany: true);
     _commitRecipientOption(_departmentController.text, forCompany: false);
+    _syncRecipientContactFields();
     _commitEmailListOptions(_toController.text, target: _toOptions);
     _commitEmailListOptions(_ccController.text, target: _ccOptions);
     _commitEmailListOptions(_bccController.text, target: _bccOptions);
     _saveOrUpdateRecipientProfile();
-
-    setState(() {
-      _isRecipientsCollapsed = true;
-    });
+    _saveDraftState();
 
     ScaffoldMessenger.of(
       context,
@@ -294,6 +305,7 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
       to: _toController.text.trim(),
       cc: _ccController.text.trim(),
       bcc: _bccController.text.trim(),
+      contacts: List<_EmailRecipient>.from(_recipientContacts),
     );
     if (!profile.hasData) {
       return;
@@ -325,13 +337,19 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
     final _RecipientProfile profile = _recipientProfiles[index];
     setState(() {
       _editingRecipientProfile = profile;
-      _isRecipientsCollapsed = false;
       _companyController.text = profile.company;
       _departmentController.text = profile.department;
       _toController.text = profile.to;
       _ccController.text = profile.cc;
       _bccController.text = profile.bcc;
+      _selectedCoworkerCcEmails.clear();
+      _selectedCustomerToEmail = null;
+      _recipientContacts
+        ..clear()
+        ..addAll(_contactsForRecipientProfile(profile));
+      _syncRecipientContactFields();
     });
+    _saveDraftState();
   }
 
   /// Deletes a valid recipient row and clears matching edit state.
@@ -501,6 +519,7 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
         ? <_CustomerMachineEntry>[_CustomerMachineEntry()]
         : machinePool.map((_SavedCustomerMachine machine) {
             final _CustomerMachineEntry restored = _CustomerMachineEntry();
+            _bindMachineDraftListeners(restored);
             restored.isExpanded = false;
             restored.customerMachineName.text = machine.customerMachineName;
             restored.machineNumber.text = machine.machineNumber;
@@ -521,9 +540,23 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
       _customerEmailController.text = entry.email;
       _customerPhoneController.text = entry.phone;
       _customerShippingAddressController.text = entry.shippingAddress;
+      if (_selectedCustomerToEmail != null) {
+        _recipientContacts.removeWhere(
+          (_EmailRecipient contact) =>
+              contact.position == 'Customer' &&
+              contact.email.toLowerCase() ==
+                  _selectedCustomerToEmail!.toLowerCase(),
+        );
+      }
+      _selectedCustomerToEmail = null;
+      _syncRecipientContactFields();
 
       for (final _CustomerMachineEntry machine in _customerMachines) {
+        _unbindMachineDraftListeners(machine);
         machine.dispose();
+      }
+      for (final _CustomerMachineEntry machine in restoredMachines) {
+        _bindMachineDraftListeners(machine);
       }
       _customerMachines
         ..clear()
@@ -603,6 +636,12 @@ extension _EmailComposerProfiles on _EmailComposerPageState {
       _toController.text = profile.to;
       _ccController.text = profile.cc;
       _bccController.text = profile.bcc;
+      _selectedCoworkerCcEmails.clear();
+      _selectedCustomerToEmail = null;
+      _recipientContacts
+        ..clear()
+        ..addAll(_contactsForRecipientProfile(profile));
+      _syncRecipientContactFields();
     });
 
     _saveDraftState();
